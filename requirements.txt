@@ -1,0 +1,9 @@
+pandas
+sentence-transformers
+chromadb
+matplotlib
+pandas
+tqdm
+sentence-transformers
+chromadb
+langchain
