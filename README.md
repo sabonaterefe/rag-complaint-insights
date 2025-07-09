@@ -1,109 +1,144 @@
 # rag-complaint-insights
-
 RAG Complaint Insights
-A modular, production-ready pipeline for semantic search over consumer complaint narratives, built using Retrieval-Augmented Generation (RAG) principles, SentenceTransformers, and ChromaDB. This project enables regulatory teams, analysts, and product owners to extract meaningful insights from unstructured complaint data.
+A production-grade Retrieval-Augmented Generation (RAG) system for analyzing customer complaints using semantic search, local LLMs, and interactive evaluation — fully containerized and modular.
 
-Business Motivation
-The Consumer Financial Protection Bureau (CFPB) collects thousands of consumer complaints about financial products and services. These narratives are rich with signals about systemic issues, customer pain points, and regulatory risks — but they are buried in unstructured text.
 
-Objective: Design a scalable system that enables semantic search and exploration of complaint narratives to support:
+Project Overview
+RAG Complaint Insights is a complete pipeline for answering natural language questions about customer complaints. It combines:
 
-Regulatory investigations
+Semantic retrieval over complaint documents
 
-Trend and root cause analysis
+Local LLMs (Gemma, Mistral, LLaMA2) via Ollama
 
-Customer experience insights
+Streamlit assistant interface
 
-Internal QA and escalation workflows
+Evaluation engine with semantic scoring
 
-Solution Overview
-This project implements a Retrieval-Augmented Generation (RAG)-inspired architecture that transforms raw complaint narratives into a searchable vector database using modern NLP techniques.
+Dashboard for model comparison and PDF reporting
 
-Pipeline Architecture
-Raw CSV → Preprocessing → Chunking → Embedding → ChromaDB Index → Semantic Retrieval
+Dockerized for reproducible deployment
 
-Stage	Description
-Preprocessing	Cleans and filters complaint narratives
-Chunking	Splits long texts into semantically coherent chunks
-Embedding	Converts chunks into dense vectors using transformers
-Indexing	Stores vectors and metadata in ChromaDB
-Retrieval	Performs semantic search over indexed chunks
-Why This Approach?
-Challenge	Solution	Benefit
-Long, noisy narratives	Recursive chunking with overlap	Preserves semantic context
-Keyword search limitations	SentenceTransformer embeddings	Captures meaning, not just words
-Scalable storage	ChromaDB vector store	Fast, persistent, and lightweight
-Traceability	Metadata with each chunk	Enables filtering and auditability
-Key Findings
-Semantic search surfaces more relevant and nuanced results than keyword-based methods.
+System Architecture
+User ↔ Streamlit UI
+        ↓
+   RAG Pipeline
+   ├── Retrieve top-k chunks (ChromaDB)
+   ├── Build prompt (context + question)
+   └── Generate answer (Ollama LLM)
+        ↓
+   Evaluation Engine (optional)
+        ↓
+   Dashboard + PDF Reporting
+Tech Stack & Justification:
+Component	Tool	Why It Was Chosen
+Vector DB	ChromaDB	Fast, local, and Python-native
+Embeddings	SentenceTransformers	High-quality semantic similarity (MiniLM, MPNet)
+LLM Inference	Ollama	Lightweight local LLMs with multi-model support
+UI	Streamlit	Rapid prototyping and interactive dashboards
+Evaluation	Cosine similarity + PDF	Quantitative scoring and exportable summaries
+Containerization	Docker	Reproducible, portable, and deployment-ready
+RAG Pipeline Design:
+1. Embedding & Indexing
+Documents embedded using SentenceTransformers
 
-Many complaints share latent themes such as billing confusion and poor communication across companies and products.
+Stored in ChromaDB with metadata for traceability
 
-Embedding-based retrieval enables clustering, trend detection, and future LLM-based summarization.
+2. Retrieval
+Top-k chunks retrieved using cosine similarity
 
-Project Structure
-rag-complaint-insights/
-├── data/
-│   └── interim/
-│       └── filtered_complaints.csv        # (excluded from Git)
-├── notebooks/
-│   ├── 01_eda_preprocessing.ipynb
-│   └── 02_retrieve_chunks.ipynb
-├── reports/
-│   └── eda_summary.json
-├── src/
-│   ├── data_preprocessing.py
-│   ├── chunking.py
-│   ├── embed_store.py
-│   └── retrieve.py
-├── vector_store/                          # (excluded from Git)
-├── requirements.txt
-└── README.md
-How to Run
-Install dependencies
+Semantic relevance check filters weak context
 
-pip install -r requirements.txt
-Preprocess the data
+3. Prompt Construction
+Context + question formatted into a flexible prompt
 
-python src/data_preprocessing.py
-Embed and index
+Encourages reasoning even when the context is incomplete
 
-python src/embed_store.py
-Query semantically
+4. Answer Generation
+Prompt passed to Ollama LLM (Gemma, Mistral, etc.)
 
-python src/retrieve.py
-Example Use Case
-Query: "Find complaints about unauthorized credit card charges"
+Fallback logic triggers if the context is irrelevant
 
-The system retrieves semantically similar chunks such as:
+Streamlit Assistant
+Ask natural language questions
 
-"I noticed a charge I didn’t make..."
+View grounded answers with retrieved sources
 
-"My card was used without my permission..."
+Provide feedback:
 
-"The company refused to reverse the fraudulent transaction..."
+Download Q&A logs
 
-Even if the exact phrase "unauthorized charge" is not used.
+Evaluation Engine:
+Batch evaluation of questions across models
 
-Tools and Technologies
-SentenceTransformers
+Semantic similarity scoring (MiniLM)
 
-ChromaDB
+Flags weak answers based on a confidence threshold
 
-LangChain (for chunking)
+Outputs CSV with scores, chunks, and metadata
 
-Python 3.10+
+Evaluation Dashboard: 
+Upload evaluation results
 
-Modular, script-based architecture
+Set confidence thresholds
 
-Future Enhancements
-Integrate LLMs for answer generation (Task 3)
+View weak vs. strong answers
 
-Add clustering and topic modeling
+Score distribution histograms
 
-Deploy as a web-based semantic search interface
+Model leaderboard
 
-Fine-tune embeddings for domain specificity
+Export PDF summary reports
 
-Author
-Sabona Terefe Machine Learning Engineer | NLP Practitioner | Deployment-Focused Builder GitHub: https://github.com/sabonaterefe
+Docker Setup
+# Build the image
+docker build -t rag-insights .
+
+# Run the container
+docker run -p 8501:8501 rag-insights
+Testing:
+pytest tests/
+Includes tests for:
+
+RAG pipeline output structure
+
+Evaluation scoring
+
+Embedding wrapper compatibility
+
+Branches:
+Branch	Description
+main	Stable baseline
+assistant-ui	Streamlit assistant interface
+evaluation-engine	Evaluation logic and notebook
+evaluation-dashboard	Dashboard with charts, leaderboard, and PDF export
+embedding-wrapper-fix	ChromaDB compatibility fix
+docker-setup	Dockerfile and containerization
+rag-fallback-enhancement	Smarter fallback logic with semantic checks
+How to Use: 
+Clone this  repo
+
+Install dependencies or build Docker image
+
+Start Ollama and pull a model (e.g. ollama run gemma:2b)
+
+Run the app:
+streamlit run interface/streamlit_app.py
+Ask questions, evaluate models, and export results
+
+Future Enhancements:
+Hybrid retrieval (keyword + vector)
+
+Feedback loop for fine-tuning
+
+Scheduled evaluation jobs with email reports
+
+Streamlit login/auth for multi-user access
+
+Acknowledgments:
+Ollama for local LLMs
+
+ChromaDB for blazing-fast vector search
+
+SentenceTransformers for powerful embeddings
+
+Streamlit for rapid UI development
