@@ -1,30 +1,17 @@
-from sentence_transformers import SentenceTransformer
 from chromadb import PersistentClient
+import os
+import sys
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+from src.embedding_wrapper import ChromaCompatibleEmbeddingFunction
 
-def load_index(index_path="vector_store/chroma_index"):
-    client = PersistentClient(path=index_path)
-    return client.get_or_create_collection(name="complaints")
+def load_vectorstore():
+    client = PersistentClient(path="chroma_db")
+    embedding_fn = ChromaCompatibleEmbeddingFunction()
+    return client.get_or_create_collection(name="complaints", embedding_function=embedding_fn)
 
-def embed_query(query, model_name="all-MiniLM-L6-v2"):
-    model = SentenceTransformer(model_name)
-    return model.encode([query])[0]
-
-def search(collection, query_embedding, top_k=5):
-    results = collection.query(
-        query_embeddings=[query_embedding.tolist()],
-        n_results=top_k
-    )
-    return results
-
-def display_results(results):
-    for i, doc in enumerate(results["documents"][0]):
-        print(f"\n🔎 Match {i+1}:")
-        print(doc)
-        print("📎 Metadata:", results["metadatas"][0][i])
-
-if __name__ == "__main__":
-    query = "I was charged for a loan I never took"
-    collection = load_index()
-    embedding = embed_query(query)
-    results = search(collection, embedding)
-    display_results(results)
+def retrieve_top_k_chunks(query: str, k: int = 3):
+    collection = load_vectorstore()
+    results = collection.query(query_texts=[query], n_results=k)
+    return results["documents"][0], results["metadatas"][0]
