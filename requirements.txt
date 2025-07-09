@@ -5,5 +5,12 @@ matplotlib
 pandas
 tqdm
 sentence-transformers
-chromadb
-langchain
+langchain==0.1.14
+langchain-community==0.0.30
+sentence-transformers
+transformers
+chromadb==1.0.15
+fpdf
+
+
+
